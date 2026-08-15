@@ -1,0 +1,14 @@
+// Prisma 7 schema. The connection string lives in prisma.config.ts (CLI)
+// and in the driver adapter in src/lib/prisma.ts (runtime).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Add your models here, then run `pnpm db:migrate`.

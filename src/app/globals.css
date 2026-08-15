@@ -1,26 +1,88 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Design tokens from the zakat.sol mockups. Light-only by design. */
+@theme {
+  --color-ink: #14251c;
+  --color-ink-soft: #3e5147;
+  --color-muted: #6b7a70;
+  --color-muted-soft: #85938b;
+  --color-faint: #93a099;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-brand: #0f7a52;
+  --color-brand-bright: #14976a;
+  --color-brand-mid: #12855a;
+  --color-brand-deep: #0b5c40;
+  --color-brand-pale: #bfebd5;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-sand: #efede6;
+  --color-cream: #faf7f0;
+  --color-cream-soft: #fcfbf7;
+  --color-shell: #f4f1e8;
+  --color-mint: #e6eee8;
+  --color-mint-soft: #f3f7f3;
+  --color-danger: #b5432b;
+
+  --color-line: rgba(20, 37, 28, 0.11);
+  --color-line-soft: rgba(20, 37, 28, 0.07);
+
+  /* "proxima-nova" is the family name served by the Adobe Fonts kit. */
+  --font-sans: "proxima-nova", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+@layer base {
+  /* Headings carry Proxima Nova Extrabold; everything else stays regular. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 800;
+  }
+}
+
+/* The eight-point star that carries the brand. */
+@utility star {
+  clip-path: polygon(
+    50% 0,
+    61% 24%,
+    87% 13%,
+    76% 39%,
+    100% 50%,
+    76% 61%,
+    87% 87%,
+    61% 76%,
+    50% 100%,
+    39% 76%,
+    13% 87%,
+    24% 61%,
+    0 50%,
+    24% 39%,
+    13% 13%,
+    39% 24%
+  );
+}
+
+/* Faint diagonal + orthogonal grid used behind the hero. */
+@utility blueprint-grid {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(15, 122, 82, 0.16) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(-45deg, rgba(15, 122, 82, 0.16) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(0deg, rgba(20, 37, 28, 0.07) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(90deg, rgba(20, 37, 28, 0.07) 0 1px, transparent 1px 58px);
+}
+
+@utility hatched {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(20, 37, 28, 0.07) 0 6px,
+    transparent 6px 12px
+  );
 }

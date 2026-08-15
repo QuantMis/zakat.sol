@@ -27,7 +27,6 @@
 
   /* "proxima-nova" is the family name served by the Adobe Fonts kit. */
   --font-sans: "proxima-nova", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
 }
 
 body {
@@ -77,12 +76,4 @@ body {
     repeating-linear-gradient(-45deg, rgba(15, 122, 82, 0.16) 0 1px, transparent 1px 58px),
     repeating-linear-gradient(0deg, rgba(20, 37, 28, 0.07) 0 1px, transparent 1px 58px),
     repeating-linear-gradient(90deg, rgba(20, 37, 28, 0.07) 0 1px, transparent 1px 58px);
-}
-
-@utility hatched {
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(20, 37, 28, 0.07) 0 6px,
-    transparent 6px 12px
-  );
 }

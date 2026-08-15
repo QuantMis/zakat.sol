@@ -1,22 +1,20 @@
 export const dashboardNav = [
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/calculation", label: "Calculation" },
-  { href: "/nisab", label: "Nisab & dates" },
-  { href: "/history", label: "History" },
+  { href: "/portfolio", label: "My Portfolio" },
+  { href: "/calculation", label: "Zakatable Wealth" },
 ] as const;
 
 /**
- * Public pages reachable from the site header. An item with `wordmark` renders a
- * partner's own lockup instead of text; `label` stays on as its accessible name.
+ * A dashboard link that keeps reporting on the address being watched, so moving
+ * between screens does not drop a pasted wallet back to whatever Phantom has
+ * connected — nothing, for a visitor who never connected one.
+ *
+ * A connected wallet's address is deliberately not appended: the dashboard
+ * already follows Phantom, and pinning that address to the URL would outlive a
+ * switch of account.
  */
-export const marketingNav = [
-  { href: "/blog", label: "Blog" },
-  {
-    href: "/sanctum",
-    label: "Sanctum",
-    wordmark: { src: "/sanctum-wordmark.png", width: 133, height: 26 },
-  },
-] as const;
+export function watchedHref(href: string, address: string | null): string {
+  return address ? `${href}?address=${encodeURIComponent(address)}` : href;
+}
 
 /** Links without an `href` are labels for work that has no page yet. */
 export const footerNav = [
@@ -24,20 +22,18 @@ export const footerNav = [
     title: "Product",
     links: [
       { label: "Calculator", href: "/portfolio" },
-      { label: "Nisab tracker", href: "/nisab" },
-      { label: "Sanctum stake", href: "/sanctum" },
+      { label: "Zakatable wealth", href: "/calculation" },
     ],
   },
   {
-    title: "Rulings",
+    title: "Method",
     links: [
-      { label: "Blog", href: "/blog" },
-      { label: "Methodology", href: "/blog/pricing-a-solana-wallet" },
-      { label: "Scholar council" },
+      { label: "Our references", href: "/#references" },
+      { label: "Our data sources", href: "/#data-sources" },
     ],
   },
   {
-    title: "Legal",
-    links: [{ label: "Privacy", href: "/privacy" }, { label: "Terms" }, { label: "Contact" }],
+    title: "More",
+    links: [{ label: "Contact" }],
   },
 ] as const;

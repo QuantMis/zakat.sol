@@ -1,4 +1,4 @@
-import type { Asset, DustBucket, Liability, MetalPrices, NisabBasis } from "@/lib/types";
+import type { Asset, BreakdownLine, DustBucket, MetalPrices, NisabBasis } from "@/lib/types";
 
 /** Zakat is 2.5% of qualifying wealth held for a full lunar year (hawl). */
 export const ZAKAT_RATE = 0.025;
@@ -34,21 +34,17 @@ export function nisabThreshold(basis: NisabBasis, prices: MetalPrices): number {
 }
 
 export type ZakatInput = {
-  includedAssets: Asset[];
-  excludedAssets: Asset[];
+  assets: Asset[];
   dust: DustBucket;
-  includeDust: boolean;
-  liabilities: Liability[];
   nisab: number;
   solPrice: number;
 };
 
 export type ZakatResult = {
-  /** Everything the scan found, before exclusions and debts. */
+  /** Everything the scan found, dust included. */
   grossHoldings: number;
+  /** The dust the calculation leaves out — unpriced, or under the threshold. */
   excludedValue: number;
-  liabilitiesTotal: number;
-  deductions: number;
   netZakatable: number;
   nisab: number;
   aboveNisab: boolean;
@@ -56,33 +52,18 @@ export type ZakatResult = {
   zakatDueInSol: number;
 };
 
-export function calculateZakat({
-  includedAssets,
-  excludedAssets,
-  dust,
-  includeDust,
-  liabilities,
-  nisab,
-  solPrice,
-}: ZakatInput): ZakatResult {
-  const dustValue = includeDust ? dust.value : 0;
-  const grossHoldings = round2(sumAssets(includedAssets) + sumAssets(excludedAssets) + dust.value);
-
-  const excludedValue = round2(sumAssets(excludedAssets) + (includeDust ? 0 : dust.value));
-  const liabilitiesTotal = round2(
-    liabilities.reduce((total, liability) => total + liability.amount, 0),
-  );
-  const deductions = round2(excludedValue + liabilitiesTotal);
-
-  const netZakatable = round2(Math.max(0, sumAssets(includedAssets) + dustValue - liabilitiesTotal));
+/**
+ * Every priced holding counts. Dust does not: it is either unpriced, and so has
+ * no honest value to add, or it is under the threshold and rounds to noise.
+ */
+export function calculateZakat({ assets, dust, nisab, solPrice }: ZakatInput): ZakatResult {
+  const netZakatable = round2(sumAssets(assets));
   const aboveNisab = netZakatable >= nisab;
   const zakatDue = aboveNisab ? round2(netZakatable * ZAKAT_RATE) : 0;
 
   return {
-    grossHoldings,
-    excludedValue,
-    liabilitiesTotal,
-    deductions,
+    grossHoldings: round2(netZakatable + dust.value),
+    excludedValue: round2(dust.value),
     netZakatable,
     nisab,
     aboveNisab,
@@ -90,12 +71,6 @@ export function calculateZakat({
     zakatDueInSol: solPrice > 0 ? zakatDue / solPrice : 0,
   };
 }
-
-export type BreakdownLine = {
-  label: string;
-  detail: string;
-  value: number;
-};
 
 const CATEGORY_LABELS: Record<Asset["category"], string> = {
   sol: "SOL",

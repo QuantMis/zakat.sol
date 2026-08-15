@@ -11,4 +11,24 @@ datasource db {
   provider = "postgresql"
 }
 
-// Add your models here, then run `pnpm db:migrate`.
+/// A paid-for address, whose earlier hawls are open to anyone who looks it up.
+/// Payment buys the wallet's history, not a seat — there are no accounts here.
+model PremiumUnlock {
+  id String @id @default(cuid())
+
+  /// The scanned address this opens. Not unique: paying twice is wasteful but
+  /// not an error, and refusing the second payment would lose a real transfer.
+  address String
+
+  /// The transfer that paid for it. Unique, so one payment opens one address
+  /// and a signature cannot be replayed against another.
+  signature String @unique
+
+  /// Who sent it, and how much, as the chain reported at verification.
+  payer    String
+  lamports BigInt
+
+  paidAt DateTime @default(now())
+
+  @@index([address])
+}

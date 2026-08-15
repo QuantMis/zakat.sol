@@ -4,8 +4,8 @@ import { ConnectWalletProvider } from "@/components/wallet/connect-wallet-provid
 
 /**
  * Shell for the public pages. `overflow-x-clip` rather than `overflow-hidden`
- * so the hero backdrop stays clipped without turning this into a scroll
- * container — that would break the sticky contents list on /privacy.
+ * so a page backdrop stays clipped without turning this into a scroll
+ * container — that would break any sticky element on a page inside it.
  */
 export default function MarketingLayout({ children }: LayoutProps<"/">) {
   return (

@@ -40,7 +40,7 @@ export function TopicFilter({ active, total, topics }: TopicFilterProps) {
         >
           {entry.label}
           <span
-            className={cn("font-mono text-[11px]", entry.selected ? "text-brand/70" : "text-faint")}
+            className={cn("text-[11px]", entry.selected ? "text-brand/70" : "text-faint")}
           >
             {entry.count}
           </span>

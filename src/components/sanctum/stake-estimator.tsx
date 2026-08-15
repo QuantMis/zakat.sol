@@ -6,17 +6,19 @@ import { LstPicker } from "@/components/sanctum/lst-picker";
 import { Panel, PanelHeader, PanelLabel } from "@/components/ui/panel";
 import { StatCard } from "@/components/ui/stat-card";
 import { metalPrices } from "@/data/nisab";
-import { portfolio, solPrice } from "@/data/portfolio";
 import { stakingTokens } from "@/data/sanctum";
+import { NISAB_BASIS, SHOW_SOL_EQUIVALENT } from "@/data/settings";
 import { formatPercent, formatSol, formatUsd } from "@/lib/format";
+import { solBalanceOf, solPriceOf } from "@/lib/portfolio";
 import { HAWL_DAYS, hawlApy, projectStake } from "@/lib/staking";
 import { nisabBasisLabel, nisabThreshold, ZAKAT_RATE } from "@/lib/zakat";
-import { useZakatSettings } from "@/state/zakat-settings";
-
-const scannedSol = portfolio.assets.find((asset) => asset.symbol === "SOL")?.balance ?? 0;
+import { usePortfolio } from "@/state/use-portfolio";
 
 export function StakeEstimator() {
-  const { settings } = useZakatSettings();
+  const { snapshot } = usePortfolio();
+  const scannedSol = solBalanceOf(snapshot);
+  const solPrice = solPriceOf(snapshot);
+
   const [amount, setAmount] = useState(String(scannedSol));
   const [symbol, setSymbol] = useState(stakingTokens[0].symbol);
 
@@ -24,14 +26,14 @@ export function StakeEstimator() {
   const amountSol = Math.max(0, Number.parseFloat(amount) || 0);
   const projection = projectStake(amountSol, token.apy, solPrice);
 
-  const nisab = nisabThreshold(settings.nisabBasis, metalPrices);
+  const nisab = nisabThreshold(NISAB_BASIS, metalPrices);
   const aboveNisab = projection.valueAtHawl >= nisab;
 
   return (
     <Panel className="w-full">
       <PanelHeader>
         <PanelLabel>Stake estimator</PanelLabel>
-        <span className="font-mono text-[11.5px] text-faint">SOL {formatUsd(solPrice)}</span>
+        <span className="tabular-nums text-[11.5px] text-faint">SOL {formatUsd(solPrice)}</span>
       </PanelHeader>
 
       <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
@@ -49,15 +51,15 @@ export function StakeEstimator() {
               step="0.001"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent font-mono text-[19px] outline-none"
+              className="min-w-0 flex-1 bg-transparent tabular-nums text-[19px] outline-none"
             />
-            <span className="font-mono text-[13px] text-faint">SOL</span>
+            <span className="text-[13px] text-faint">SOL</span>
           </div>
 
           <button
             type="button"
             onClick={() => setAmount(String(scannedSol))}
-            className="w-fit font-mono text-[11.5px] text-muted transition-colors hover:text-brand"
+            className="w-fit text-[11.5px] text-muted transition-colors hover:text-brand"
           >
             Use the scanned balance · {formatSol(scannedSol)}
           </button>
@@ -85,11 +87,11 @@ export function StakeEstimator() {
           <div className="flex flex-col gap-2 rounded-[13px] border border-line bg-cream-soft px-5 py-4">
             <p className="text-[13.5px] text-ink-soft">
               {aboveNisab
-                ? `Above the ${nisabBasisLabel(settings.nisabBasis)} nisab of ${formatUsd(nisab)}, so zakat is due on the whole balance.`
-                : `Below the ${nisabBasisLabel(settings.nisabBasis)} nisab of ${formatUsd(nisab)} — nothing is due on this alone, but it still counts towards the rest of the wallet.`}
+                ? `Above the ${nisabBasisLabel(NISAB_BASIS)} nisab of ${formatUsd(nisab)}, so zakat is due on the whole balance.`
+                : `Below the ${nisabBasisLabel(NISAB_BASIS)} nisab of ${formatUsd(nisab)} — nothing is due on this alone, but it still counts towards the rest of the wallet.`}
             </p>
-            {settings.showSolEquivalent ? (
-              <p className="font-mono text-[11.5px] text-faint">
+            {SHOW_SOL_EQUIVALENT ? (
+              <p className="tabular-nums text-[11.5px] text-faint">
                 {formatSol(projection.yieldSol)} earned · {formatSol(projection.zakatDue / solPrice)}{" "}
                 due
               </p>

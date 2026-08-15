@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono } from "next/font/google";
 
 import "./globals.css";
 
@@ -7,12 +6,6 @@ import "./globals.css";
 // next/font. Swap in the kit ID from fonts.adobe.com -> Web Projects; the kit
 // must publish Regular (400) and Extrabold (800) for the weights we use.
 const ADOBE_FONTS_KIT_ID = "XXXXXXX";
-
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: "--font-ibm-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -25,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${ibmPlexMono.variable} h-full antialiased`}>
+    <html lang="en" className="h-full antialiased">
       <head>
         <link rel="preconnect" href="https://use.typekit.net" crossOrigin="anonymous" />
         <link rel="stylesheet" href={`https://use.typekit.net/${ADOBE_FONTS_KIT_ID}.css`} />

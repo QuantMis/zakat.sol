@@ -34,7 +34,7 @@ export function RadioCard({ selected, onSelect, title, detail }: RadioCardProps)
         <span className={cn("text-[14.5px] font-semibold", !selected && "text-ink-soft")}>
           {title}
         </span>
-        <span className={cn("font-mono text-[11.5px]", selected ? "text-muted" : "text-faint")}>
+        <span className={cn("text-[11.5px]", selected ? "text-muted" : "text-faint")}>
           {detail}
         </span>
       </span>

@@ -9,7 +9,7 @@ import type { Post } from "@/lib/types";
 export function PostCard({ post }: { post: Post }) {
   return (
     <article className="group relative flex flex-col rounded-[14px] border border-line bg-cream-soft p-6 transition-colors hover:border-brand/40 sm:p-7">
-      <span className="font-mono text-[11px] tracking-[0.12em] text-brand uppercase">
+      <span className="text-[11px] tracking-[0.12em] text-brand uppercase">
         {topicLabels[post.topic]}
       </span>
 
@@ -26,7 +26,7 @@ export function PostCard({ post }: { post: Post }) {
       <p className="mt-3 text-[14.5px] leading-relaxed text-muted">{post.excerpt}</p>
 
       <div className="mt-auto flex flex-col gap-5 pt-7">
-        <p className="font-mono text-[11.5px] text-faint">
+        <p className="text-[11.5px] text-faint">
           {formatGregorian(post.publishedAt)} · {readingMinutes(post)} min read
         </p>
 

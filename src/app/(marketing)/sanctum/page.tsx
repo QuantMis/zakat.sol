@@ -28,7 +28,7 @@ export default function SanctumPage() {
               height={26}
               className="h-[17px] w-auto"
             />
-            <span className="font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+            <span className="text-[11px] tracking-[0.12em] text-muted uppercase">
               liquid staking
             </span>
           </span>
@@ -57,7 +57,7 @@ export default function SanctumPage() {
             </Link>
           </div>
 
-          <p className="font-mono text-xs text-faint">
+          <p className="text-xs text-faint">
             Staking happens in Sanctum, in your wallet. zakat.sol never signs a transaction.
           </p>
         </section>
@@ -108,7 +108,7 @@ export default function SanctumPage() {
                 key={step.title}
                 className="flex flex-col gap-3 rounded-[14px] border border-line bg-cream-soft p-6"
               >
-                <span className="flex size-8 items-center justify-center rounded-[9px] bg-brand/12 font-mono text-[13px] font-semibold text-brand">
+                <span className="flex size-8 items-center justify-center rounded-[9px] bg-brand/12 text-[13px] font-semibold text-brand">
                   {index + 1}
                 </span>
                 <h3 className="text-[17px]">{step.title}</h3>

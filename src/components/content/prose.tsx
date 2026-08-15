@@ -40,7 +40,7 @@ function Block({ block }: { block: ContentBlock }) {
     case "note":
       return (
         <aside className="flex flex-col gap-2 rounded-[13px] border border-brand/25 bg-[#F7FAF7] px-5.5 py-5">
-          <span className="font-mono text-[11px] tracking-[0.12em] text-brand uppercase">
+          <span className="text-[11px] tracking-[0.12em] text-brand uppercase">
             {block.title}
           </span>
           <p className="text-[14.5px] leading-relaxed text-ink-soft">{block.text}</p>

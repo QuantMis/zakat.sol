@@ -36,7 +36,7 @@ export default async function PostPage(props: PageProps<"/blog/[slug]">) {
       <article className="mx-auto flex w-full max-w-[760px] flex-col">
         <Link
           href="/blog"
-          className="w-fit font-mono text-[12px] text-muted transition-colors hover:text-ink"
+          className="w-fit text-[12px] text-muted transition-colors hover:text-ink"
         >
           ← Blog
         </Link>
@@ -45,7 +45,7 @@ export default async function PostPage(props: PageProps<"/blog/[slug]">) {
           {post.title}
         </h1>
 
-        <p className="mt-4 font-mono text-[12px] text-faint">
+        <p className="mt-4 text-[12px] text-faint">
           {topicLabels[post.topic]} · {formatGregorian(post.publishedAt)} ·{" "}
           {readingMinutes(post)} min read
         </p>
@@ -75,7 +75,7 @@ export default async function PostPage(props: PageProps<"/blog/[slug]">) {
       {related.length > 0 ? (
         <section className="mt-16 flex flex-col gap-5 border-t border-line pt-12">
           {/* Mono eyebrow, not a display heading — opt out of the extrabold base rule. */}
-          <h2 className="font-mono text-[11px] font-normal tracking-[0.12em] text-faint uppercase">
+          <h2 className="text-[11px] font-normal tracking-[0.12em] text-faint uppercase">
             More from the blog
           </h2>
           <div className="grid gap-5 md:grid-cols-2">

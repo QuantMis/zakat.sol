@@ -1,26 +1,30 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId } from "react";
 
-import { Button } from "@/components/ui/button";
 import { PhantomIcon } from "@/components/wallet/phantom-icon";
-import { usePhantomInstalled } from "@/components/wallet/use-phantom";
 import { phantom } from "@/data/wallets";
 import { cn } from "@/lib/cn";
+import { useWallet } from "@/state/use-wallet";
+import type { WalletStatus } from "@/state/wallet-store";
 
 const walletRow =
   "flex items-center gap-3.5 rounded-[12px] border border-brand bg-[#EFEDE3] p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
-/**
- * Wallet selection. Connecting is currently a hand-off to the sample scan —
- * this is where a real wallet adapter would attach.
- */
+/** What the Phantom row reports while the extension is being asked. */
+const statusLabels: Record<WalletStatus, string> = {
+  detecting: "Looking…",
+  unavailable: "Install",
+  disconnected: "Detected",
+  connecting: "Approve in Phantom…",
+  connected: "Connected",
+};
+
 export function ConnectWalletModal({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const titleId = useId();
-  const [address, setAddress] = useState("");
-  const installed = usePhantomInstalled();
+  const wallet = useWallet();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -31,7 +35,15 @@ export function ConnectWalletModal({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  const scan = () => router.push("/portfolio");
+  const scan = () => {
+    onClose();
+    router.push("/portfolio");
+  };
+
+  /** Approval is Phantom's to grant — we only move on once it has. */
+  const connect = async () => {
+    if (await wallet.connect()) scan();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -67,62 +79,40 @@ export function ConnectWalletModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {installed === false ? (
+        {wallet.status === "unavailable" ? (
           <a href={phantom.installUrl} target="_blank" rel="noreferrer" className={walletRow}>
             <PhantomIcon className="size-[38px] shrink-0 rounded-[10px]" />
             <span className="flex flex-1 flex-col gap-0.5">
               <span className="text-[15.5px] font-semibold">{phantom.name}</span>
-              <span className="font-mono text-[11.5px] text-brand">Install</span>
+              <span className="text-[11.5px] text-brand">
+                {statusLabels.unavailable}
+              </span>
             </span>
             <span className="text-base text-brand">↗</span>
           </a>
         ) : (
           <button
             type="button"
-            onClick={scan}
-            disabled={installed === null}
+            onClick={() => void (wallet.address ? scan() : connect())}
+            disabled={wallet.status === "detecting" || wallet.status === "connecting"}
             className={cn(walletRow, "disabled:cursor-progress")}
           >
             <PhantomIcon className="size-[38px] shrink-0 rounded-[10px]" />
             <span className="flex flex-1 flex-col gap-0.5">
               <span className="text-[15.5px] font-semibold">{phantom.name}</span>
-              <span className="font-mono text-[11.5px] text-brand">
-                {installed === null ? "Looking…" : "Detected"}
+              <span className="text-[11.5px] text-brand">
+                {statusLabels[wallet.status]}
               </span>
             </span>
             <span className="text-base text-brand">→</span>
           </button>
         )}
 
-        <div className="flex items-center gap-3">
-          <span className="h-px flex-1 bg-line" />
-          <span className="font-mono text-[11px] tracking-[0.1em] text-faint">OR</span>
-          <span className="h-px flex-1 bg-line" />
-        </div>
-
-        <form
-          className="flex flex-col gap-2.5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            scan();
-          }}
-        >
-          <label htmlFor="watch-address" className="text-[13px] text-muted">
-            Watch any address
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="watch-address"
-              value={address}
-              onChange={(event) => setAddress(event.target.value)}
-              placeholder="Paste address or name.sol"
-              className="min-w-0 flex-1 rounded-[10px] border border-line bg-[#F7F5EE] px-3.5 py-3 font-mono text-[12.5px] text-ink outline-none placeholder:text-faint focus:border-brand"
-            />
-            <Button type="submit" variant="outline" size="sm" className="px-4.5">
-              Scan
-            </Button>
-          </div>
-        </form>
+        {wallet.error ? (
+          <p role="alert" className="-mt-2.5 text-[12.5px] text-danger">
+            {wallet.error}
+          </p>
+        ) : null}
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export function PostCover({ post, className }: { post: Post; className?: string 
       </div>
 
       <div className="relative flex h-full flex-col justify-end gap-2.5 p-6 sm:p-9">
-        <span className="font-mono text-[11px] tracking-[0.14em] text-brand uppercase">
+        <span className="text-[11px] tracking-[0.14em] text-brand uppercase">
           {topicLabels[post.topic]}
         </span>
         <p className="max-w-[600px] text-[24px] leading-[1.1] font-bold tracking-[-0.03em] sm:text-[32px] lg:text-[38px]">

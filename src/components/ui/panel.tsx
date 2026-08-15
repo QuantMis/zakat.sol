@@ -23,11 +23,9 @@ export function PanelHeader({ className, children }: { className?: string; child
   );
 }
 
-/** Small mono caps label used above every panel in the design. */
+/** Small tracked caps label used above every panel in the design. */
 export function PanelLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="font-mono text-[11px] tracking-[0.12em] text-faint uppercase">{children}</span>
-  );
+  return <span className="text-[11px] tracking-[0.12em] text-faint uppercase">{children}</span>;
 }
 
 export function PanelRow({ className, children }: { className?: string; children: ReactNode }) {

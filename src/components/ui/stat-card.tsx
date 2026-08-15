@@ -20,7 +20,7 @@ export function StatCard({ label, value, tone = "default" }: StatCardProps) {
       <span className={cn("text-[13px]", styles.label)}>{label}</span>
       <span
         className={cn(
-          "font-mono text-[26px] font-semibold tracking-[-0.02em] sm:text-[30px]",
+          "tabular-nums text-[26px] font-semibold tracking-[-0.02em] sm:text-[30px]",
           styles.value,
         )}
       >

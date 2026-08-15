@@ -1,16 +1,33 @@
-# zakat.sol — Solana Zakat Calculator
+<div align="center">
 
-Implementation of the `Zakat Calculator.dc.html` mockups: seven screens that
-price a Solana portfolio, check it against the nisab, and produce a report.
+<img src="public/zakat-mark.png" alt="zakat.sol" width="120" />
 
-| Layer     | Choice                                                |
-| --------- | ----------------------------------------------------- |
-| Framework | Next.js 16 (App Router, Turbopack), React 19          |
-| Styling   | Tailwind CSS 4, design tokens in `src/app/globals.css` |
-| Fonts     | Space Grotesk + IBM Plex Mono via `next/font`         |
-| Database  | PostgreSQL 17 via Docker Compose (wired, unused)      |
-| ORM       | Prisma 7 with the `@prisma/adapter-pg` driver adapter |
-| Tooling   | TypeScript (strict), ESLint 9                         |
+# zakat.sol
+
+### Zakat, straight from your wallet
+
+Paste a Solana address. We price it, check it against the nisab, and hand you a
+report you can actually file.
+
+</div>
+
+---
+
+## What it does
+
+Zakat is 2.5% of the wealth you have held for a lunar year — simple arithmetic,
+awkward inputs. A Solana wallet is dozens of mints at moving prices, some of
+which shouldn't be counted at all.
+
+zakat.sol does the tedious part:
+
+- **Scans** the wallet and prices every holding, dust included.
+- **Sorts** what counts from what doesn't — exclude by hand, or by treatment rule.
+- **Checks the nisab** against 85g gold or 595g silver at the current metal price.
+- **Tracks the hawl** on the Hijri calendar, so the year-end date is the real one.
+- **Exports** the whole breakdown as CSV or PDF, with a year-by-year history.
+
+Nothing here moves your funds. It reads, prices, and adds up — that's all.
 
 ## Getting started
 
@@ -20,89 +37,43 @@ pnpm install
 pnpm dev
 ```
 
-http://localhost:3000. The database is only needed once models exist —
-`pnpm db:up` starts Postgres, `pnpm db:migrate` applies migrations.
+Then open http://localhost:3000.
 
-## Screens
+---
 
-| Route          | Mockup                   | Notes                                        |
-| -------------- | ------------------------ | -------------------------------------------- |
-| `/`            | 01 Landing, 02 Connect   | Hero, stat band, endorsement, wallet modal   |
-| `/portfolio`   | 03 Portfolio scan        | Per-asset include/exclude, filters, dust row |
-| `/calculation` | 04 Calculation breakdown | Deductions, liabilities, CSV + print export  |
-| `/nisab`       | 05 Nisab & dates         | Gold/silver basis, hawl, treatment rules     |
-| `/history`     | 06 History               | Year chart, table, export all                |
+<div align="center">
 
-Screen 07 (mobile) is the same routes rendered responsively, not separate pages.
+<img src="public/sanctum-wordmark.png" alt="Sanctum" width="200" />
 
-Three public pages sit alongside them, outside the mockups:
+</div>
 
-| Route           | Notes                                                              |
-| --------------- | ------------------------------------------------------------------ |
-| `/blog`         | Card grid, `?topic=` filter as a real URL, reading time derived     |
-| `/blog/[slug]`  | Prerendered per post, generated cover art, related posts            |
-| `/privacy`      | Policy sections + a control that clears the stored settings         |
-| `/sanctum`      | Liquid staking explainer with a hawl-length yield estimator         |
+### Staking, without the guesswork
 
-## How the numbers work
+[Sanctum](https://sanctum.so) is Solana's liquid staking layer — stake SOL,
+receive a liquid staking token (INF, jitoSOL, bSOL and friends) that keeps
+earning while you keep using it.
 
-Nothing is hardcoded — every figure derives from `src/data/` through
-`src/lib/zakat.ts`:
+Staked wealth is still your wealth, so it belongs in the calculation. The
+tricky part is *how*, and that's what the `/sanctum` page covers:
 
-- **Gross holdings** — every mint the scan found, dust included.
-- **Deductions** — holdings excluded by hand or by a treatment rule, plus
-  manually entered liabilities.
-- **Net zakatable** — gross minus deductions.
-- **Zakat due** — 2.5% of net zakatable, but only once it meets the nisab.
-- **Nisab** — 85g gold or 595g silver at the stored metal price.
+- The LST counts in full at market value, exactly like spot SOL.
+- Rewards are already inside the price — an LST redeems for more SOL over time,
+  so adding a separate rewards line would count it twice.
+- Unstake queues delay access, not ownership. A delay doesn't defer the zakat.
 
-Hijri dates come from `Intl.DateTimeFormat` with the `islamic-umalqura`
-calendar rather than fixed strings, and every date is formatted in UTC so the
-server and client always agree.
+There's a yield estimator on that page too, so you can see what a hawl's worth
+of staking does to next year's number before you commit to it.
 
-Two places where the mockup's own arithmetic did not add up, and this
-implementation follows the maths instead:
+---
 
-- The mockup deducted $18.44 of dust from a gross that never included it. Here
-  gross includes dust and the deduction removes it once.
-- The mockup showed $966.11 of zakat on $38,604.50 of net wealth; 2.5% of that
-  is $965.11.
+<div align="center">
 
-## Layout
+<img src="public/solana-foundation-malaysia.png" alt="Solana Foundation Malaysia" width="640" />
 
-```
-src/
-  app/
-    (marketing)/             # header + footer shell for the public pages
-      page.tsx               # 01 landing
-      blog/[slug]|privacy|sanctum/page.tsx
-    (dashboard)/             # sidebar shell for the signed-in screens
-      portfolio|calculation|nisab|history/page.tsx
-  components/
-    ui/                      # Button, Toggle, Panel, Segmented, RadioCard, …
-    layout/                  # sidebar, mobile nav, logo, wallet badge
-    marketing/               # landing sections, header, footer, backdrops
-    content/                 # block renderer shared by blog + privacy
-    wallet/                  # connect modal + trigger
-    blog|legal|sanctum/
-    portfolio|calculation|nisab|history/
-  data/                      # sample scan, metal prices, posts, policy, pools
-  lib/                       # zakat maths, staking maths, formatting, CSV
-  state/                     # settings store + derived hooks
-```
+</div>
 
-`src/state/settings-store.ts` keeps settings outside React and persists them to
-`localStorage`; components read it through `useSyncExternalStore`, so the
-server renders defaults and the client swaps in stored values after hydration.
+## Built with support from
 
-## Not wired up yet
-
-- **Wallet connection.** The modal hands off to the sample scan in
-  `src/data/portfolio.ts`. A real `@solana/wallet-adapter` + RPC + price feed
-  drops in behind that module without touching anything downstream.
-- **Persistence.** History and settings are per-browser. Prisma and Postgres
-  are configured but the schema has no models.
-- **PDF export** uses the browser print dialog; CSV export is real.
-- **Sanctum pool figures** in `src/data/sanctum.ts` are a sample snapshot. The
-  estimator maths is real; the APYs and TVLs want the Sanctum API behind them.
-- **The newsletter form** in the footer has no provider wired to it yet.
+This project is a **Superteam Microgrant** recipient, built with the support of
+**Solana Foundation Malaysia** — bringing zakat tooling that Muslim Solana
+holders can trust to the ecosystem.

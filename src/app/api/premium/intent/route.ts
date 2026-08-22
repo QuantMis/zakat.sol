@@ -38,6 +38,17 @@ export async function GET(request: NextRequest): Promise<Response> {
     return Response.json({ error: "Payments are not configured." }, { status: 503 });
   }
 
+  // A wallet paying itself moves nothing: the treasury's balance comes back
+  // lower by the fee, so the transfer is refused after it has been made and
+  // paid for. Refusing to build it costs nobody a fee. Usually this is a
+  // treasury pointed at the wallet doing the testing.
+  if (payer === TREASURY_ADDRESS) {
+    return Response.json(
+      { error: "This wallet is the treasury, so it cannot pay itself." },
+      { status: 400 },
+    );
+  }
+
   try {
     const from = new PublicKey(payer);
 
@@ -57,11 +68,19 @@ export async function GET(request: NextRequest): Promise<Response> {
     transaction.feePayer = from;
     transaction.recentBlockhash = await latestBlockhash();
 
-    // Handed over as the base58 message Phantom's `request` takes, so the
-    // browser never needs a Solana library — and so the only thing that crosses
-    // is bytes it cannot alter without invalidating what it signs.
+    // The whole transaction, base58, with the signature slot left empty for
+    // Phantom to fill. Its older docs show the bare message here, but current
+    // builds read this as a transaction — handed a message, they take the
+    // header's signer count for a signature count and run off the end of the
+    // buffer. Serialising it here keeps the browser free of a Solana library,
+    // and what crosses is bytes it cannot alter without invalidating them.
     return Response.json(
-      { message: bs58.encode(transaction.serializeMessage()), lamports: PRICE_LAMPORTS },
+      {
+        transaction: bs58.encode(
+          transaction.serialize({ requireAllSignatures: false, verifySignatures: false }),
+        ),
+        lamports: PRICE_LAMPORTS,
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

@@ -14,10 +14,12 @@
   --color-brand-deep: #0b5c40;
   --color-brand-pale: #bfebd5;
 
-  --color-sand: #efede6;
-  --color-cream: #faf7f0;
-  --color-cream-soft: #fcfbf7;
-  --color-shell: #f4f1e8;
+  /* Surface tiers, from the page white downwards. Neutral greys, no hue: the
+     ladder is lightness only, so nothing tints the ink or the brand green. */
+  --color-sand: #ededed;
+  --color-cream: #f5f5f5;
+  --color-cream-soft: #fbfbfb;
+  --color-shell: #f1f1f1;
   --color-mint: #e6eee8;
   --color-mint-soft: #f3f7f3;
   --color-danger: #b5432b;

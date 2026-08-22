@@ -29,7 +29,11 @@ export function memoFor(address: string): string {
 
 export type RedeemResult =
   | { ok: true }
-  | { ok: false; reason: string };
+  /**
+   * `pending` separates a payment the chain has not caught up with from one it
+   * has judged. Only the first is worth asking about again.
+   */
+  | { ok: false; pending?: boolean; reason: string };
 
 export async function isUnlocked(address: string): Promise<boolean> {
   const paid = await prisma.premiumUnlock.findFirst({ where: { address } });
@@ -53,7 +57,9 @@ export async function redeem(address: string, signature: string): Promise<Redeem
   }
 
   const transaction = await fetchTransaction(signature);
-  if (!transaction) return { ok: false, reason: "That payment could not be found on-chain yet." };
+  if (!transaction) {
+    return { ok: false, pending: true, reason: "That payment has not settled yet." };
+  }
   if (transaction.failed) return { ok: false, reason: "That payment did not succeed." };
 
   if (!transaction.memos.includes(memoFor(address))) {

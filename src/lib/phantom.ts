@@ -18,8 +18,9 @@ export type PhantomProvider = {
   connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: PhantomPublicKey }>;
   disconnect(): Promise<void>;
   /**
-   * Signs and broadcasts a transaction the server built, handed over as the
-   * base58 message Phantom expects. Phantom broadcasts through its own node, so
+   * Signs and broadcasts a transaction the server built. The parameter is named
+   * `message` for historical reasons; what Phantom deserializes is the whole
+   * base58 transaction, unsigned. Phantom broadcasts through its own node, so
    * the page needs neither an RPC URL nor a Solana library of its own.
    */
   request(args: {

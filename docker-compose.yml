@@ -48,6 +48,10 @@ services:
       # `postgres`, not localhost — the app resolves it over the compose network.
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/zakat?schema=public
       HELIUS_API_KEY: ${HELIUS_API_KEY}
+      # Server-side only, and must stay the same between deploys: it salts the
+      # wallet hash the landing-page counters are keyed on, so a new value
+      # counts every returning wallet as a new one. See src/lib/tally.ts.
+      METRICS_HASH_SALT: ${METRICS_HASH_SALT}
     ports:
       # nginx runs on the host and proxies here; nothing external reaches it.
       - "127.0.0.1:3000:3000"

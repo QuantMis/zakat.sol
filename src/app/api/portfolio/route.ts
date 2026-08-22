@@ -1,11 +1,19 @@
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 
+import { metalPrices } from "@/data/nisab";
+import { NISAB_BASIS } from "@/data/settings";
+import { solPriceOf } from "@/lib/portfolio";
 import { scanPortfolio } from "@/lib/scan";
+import { recordScan } from "@/lib/tally";
+import { calculateZakat, nisabThreshold } from "@/lib/zakat";
 
 /**
  * Keeps the Helius key on the server, and nothing else. The address arrives in
- * the query string, is scanned, and the answer goes straight back out — nothing
- * about the request is written down.
+ * the query string, is scanned, and the answer goes straight back out.
+ *
+ * The scan then adds itself to the landing-page counters, under a salted hash
+ * of the address — see src/lib/tally.ts for what that keeps and what it does
+ * not. It runs after the response, so counting never delays a scan.
  */
 
 /** Base58 alphabet — no 0, O, I or l. A pubkey is 32 bytes, so 32–44 chars. */
@@ -20,6 +28,23 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   try {
     const snapshot = await scanPortfolio(address);
+
+    after(async () => {
+      // Worked out here rather than read back off the client, using the same
+      // functions the dashboard renders from, so the counter cannot be moved by
+      // anything but a real scan.
+      const zakat = calculateZakat({
+        assets: snapshot.assets,
+        dust: snapshot.dust,
+        nisab: nisabThreshold(NISAB_BASIS, metalPrices),
+        solPrice: solPriceOf(snapshot),
+      });
+
+      await recordScan(snapshot, {
+        holdingsUsd: zakat.netZakatable,
+        zakatDueUsd: zakat.zakatDue,
+      });
+    });
 
     // Whose wallet holds what is nobody's business to keep, least of all a
     // CDN's between here and the reader.

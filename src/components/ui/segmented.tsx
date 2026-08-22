@@ -2,13 +2,19 @@
 
 import { cn } from "@/lib/cn";
 
+/** `sm` is for the token cards, which sit four across a desktop row. */
+const SIZES = {
+  sm: "gap-0.5 [&>button]:rounded-[7px] [&>button]:px-2 [&>button]:py-1 [&>button]:text-[11.5px]",
+  md: "gap-2 [&>button]:rounded-[9px] [&>button]:px-3 [&>button]:py-2.5 [&>button]:text-[13px]",
+} as const;
+
 type SegmentedProps<T extends string> = {
   options: ReadonlyArray<{ value: T; label: string }>;
   value: T;
   onChange: (value: T) => void;
   label: string;
   className?: string;
-  fill?: boolean;
+  size?: keyof typeof SIZES;
 };
 
 export function Segmented<T extends string>({
@@ -17,10 +23,10 @@ export function Segmented<T extends string>({
   onChange,
   label,
   className,
-  fill = false,
+  size = "md",
 }: SegmentedProps<T>) {
   return (
-    <div role="radiogroup" aria-label={label} className={cn("flex gap-2", className)}>
+    <div role="radiogroup" aria-label={label} className={cn("flex", SIZES[size], className)}>
       {options.map((option) => {
         const selected = option.value === value;
 
@@ -32,9 +38,8 @@ export function Segmented<T extends string>({
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-[9px] px-3 py-2.5 text-[13px] transition-colors",
+              "transition-colors",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
-              fill && "flex-1 text-center",
               selected ? "bg-mint text-ink" : "text-muted hover:text-ink",
             )}
           >

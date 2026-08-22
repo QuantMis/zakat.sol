@@ -52,7 +52,7 @@ export default function SanctumPage() {
             >
               Open Sanctum ↗
             </a>
-            <Link href="/portfolio" className={buttonStyles("outline", "lg")}>
+            <Link href="/calculation" className={buttonStyles("outline", "lg")}>
               See it in your report
             </Link>
           </div>

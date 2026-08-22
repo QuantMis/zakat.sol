@@ -2,104 +2,31 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+import { HoldingsPanel } from "@/components/calculation/holdings-panel";
 import { PaywallModal } from "@/components/calculation/paywall-modal";
-import { zakatRowGrid } from "@/components/calculation/zakat-grid";
+import { TotalZakat } from "@/components/calculation/total-zakat";
+import { ZakatBreakdown } from "@/components/calculation/zakat-breakdown";
 import { AssetTableSkeleton } from "@/components/portfolio/skeleton";
 import { Button } from "@/components/ui/button";
 import { LockIcon } from "@/components/ui/lock-icon";
-import { Panel, PanelHeader } from "@/components/ui/panel";
-import { StatCard } from "@/components/ui/stat-card";
+import { Panel } from "@/components/ui/panel";
+import { MAX_SLICES, REST_COLOR, seriesColor } from "@/data/chart";
 import { PREMIUM_PRICE_SOL } from "@/data/premium";
 import { CALENDAR } from "@/data/settings";
+import { byCategory, byToken, colourOrder } from "@/lib/composition";
 import { downloadCsv, toCsv } from "@/lib/export";
-import { formatDate, formatPrice, formatSol, formatUsd } from "@/lib/format";
+import { formatDate, formatPrice, formatSol } from "@/lib/format";
 import { watchedHref } from "@/lib/navigation";
 import { buildYearRows } from "@/lib/report";
 import type { ZakatYear } from "@/lib/types";
-import { ZAKAT_RATE, nisabBasisLabel } from "@/lib/zakat";
+import { calculateZakat } from "@/lib/zakat";
 import { usePortfolio } from "@/state/use-portfolio";
 import { useYears } from "@/state/use-years";
 
-function TotalRow({
-  label,
-  detail,
-  value,
-  strong,
-}: {
-  label: string;
-  detail?: string;
-  value: string;
-  strong?: boolean;
-}) {
-  return (
-    <div className={`${zakatRowGrid} border-t border-line-soft px-5 py-3.5`}>
-      <span className={strong ? "text-[14.5px] font-semibold" : "text-[14.5px]"}>{label}</span>
-      <span className="hidden text-[11.5px] text-faint md:block">{detail ?? ""}</span>
-      <span
-        className={`text-right tabular-nums ${strong ? "text-[15px] font-semibold" : "text-[14.5px]"}`}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function Breakdown({ year, address }: { year: ZakatYear; address: string }) {
-  const exportCsv = () =>
-    downloadCsv(`zakat-${year.id}.csv`, toCsv(buildYearRows(year, address)));
-
-  return (
-    <Panel className="flex flex-col">
-      <PanelHeader className="flex-wrap">
-        <h2 className="text-[15px]">What was held</h2>
-
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
-            Export PDF
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportCsv}>
-            Download CSV
-          </Button>
-        </div>
-      </PanelHeader>
-
-      <div
-        className={`${zakatRowGrid} border-b border-line-soft px-5 py-3 text-[11px] tracking-[0.1em] text-faint uppercase`}
-      >
-        <div>Category</div>
-        <div className="hidden md:block">Holdings</div>
-        <div className="text-right">Value</div>
-      </div>
-
-      {year.breakdown.map((line) => (
-        <div key={line.label} className={`${zakatRowGrid} border-b border-line-soft px-5 py-3.5`}>
-          <span className="truncate text-[14.5px] font-medium">{line.label}</span>
-          <span className="hidden truncate text-[11.5px] text-faint md:block">{line.detail}</span>
-          <span className="text-right tabular-nums text-[14.5px] font-medium">
-            {formatUsd(line.value)}
-          </span>
-        </div>
-      ))}
-
-      <TotalRow label="Net zakatable" value={formatUsd(year.netZakatable)} strong />
-      <TotalRow
-        label="Nisab"
-        detail={`${nisabBasisLabel(year.nisabBasis)} · ${year.aboveNisab ? "above" : "below"}`}
-        value={formatUsd(year.nisab)}
-      />
-
-      <div className={`${zakatRowGrid} border-t border-line bg-[#F2F6F2] px-5 py-4 text-brand`}>
-        <span className="text-[14.5px] font-semibold">Zakat due</span>
-        <span className="hidden text-[11.5px] md:block">{ZAKAT_RATE * 100}% of net</span>
-        <span className="text-right tabular-nums text-[16px] font-semibold">
-          {formatUsd(year.zakatDue)}
-        </span>
-      </div>
-    </Panel>
-  );
-}
+/** Past years are rebuilt, so nothing about them is dust. */
+const NO_DUST = { mintCount: 0, value: 0 };
 
 function Missing({ title, detail, back }: { title: string; detail: string; back: string }) {
   return (
@@ -110,6 +37,133 @@ function Missing({ title, detail, back }: { title: string; detail: string; back:
         Back to all years
       </Link>
     </Panel>
+  );
+}
+
+/**
+ * A year that was worked out, with its holdings on the table. The hawl answers
+ * live here rather than in a store: they are a reading of one year by one
+ * person, and carrying them any further than the screen they were given on
+ * would quietly change a figure somewhere else.
+ */
+function PricedYear({
+  year,
+  address,
+  domain,
+}: {
+  year: ZakatYear;
+  address: string;
+  domain?: string;
+}) {
+  const [answers, setAnswers] = useState<Record<string, boolean>>({});
+
+  // A different year, or the same year on a different wallet, is a different
+  // set of holdings — answers about the old ones mean nothing against them.
+  // Adjusting during render rather than in an effect keeps the panels below
+  // from painting once with the stale answers first.
+  const scope = `${address}:${year.id}`;
+  const [answered, setAnswered] = useState(scope);
+
+  if (answered !== scope) {
+    setAnswered(scope);
+    setAnswers({});
+  }
+
+  const view = useMemo(() => {
+    const counted = (mint: string) => answers[mint] !== false;
+    const included = year.holdings.filter((asset) => counted(asset.mint));
+    const order = colourOrder(year.holdings);
+
+    const result = calculateZakat({
+      assets: included,
+      dust: NO_DUST,
+      nisab: year.nisab,
+      solPrice: year.holdings.find((asset) => asset.symbol === "SOL")?.price ?? 0,
+    });
+
+    return {
+      counted,
+      result,
+      byToken: byToken(included, order),
+      byCategory: byCategory(included),
+      colourOf: (mint: string) => {
+        const slot = order.indexOf(mint);
+        return slot >= 0 && slot < MAX_SLICES - 1 ? seriesColor(slot) : REST_COLOR;
+      },
+    };
+  }, [year, answers]);
+
+  const exportCsv = () =>
+    downloadCsv(
+      `zakat-${year.id}.csv`,
+      toCsv(
+        buildYearRows(year, address, {
+          holdings: year.holdings,
+          counted: view.counted,
+          netZakatable: view.result.netZakatable,
+          zakatDue: view.result.zakatDue,
+          aboveNisab: view.result.aboveNisab,
+        }),
+      ),
+    );
+
+  // Rebuilt to a wallet that held nothing at that hawl — most often because it
+  // did not exist yet. There is a figure, it is just zero, so there is nothing
+  // to break down and no question to ask about any of it.
+  if (year.holdings.length === 0) {
+    return (
+      <>
+        <Panel className="flex flex-col items-center gap-2 px-5 py-14 text-center">
+          <p className="text-[15px] font-medium">Nothing was held at this hawl</p>
+          <p className="max-w-[400px] text-[13.5px] leading-relaxed text-muted">
+            No holding this wallet carries today could be traced back to{" "}
+            {formatDate(year.valuedAt, "gregorian")}, so there is nothing for the year to be
+            worked out from.
+          </p>
+        </Panel>
+
+        <TotalZakat zakatDue={0} aboveNisab={false} solPrice={0} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex justify-end gap-2 print:hidden">
+        <Button variant="outline" size="sm" onClick={() => window.print()}>
+          Export PDF
+        </Button>
+        <Button variant="outline" size="sm" onClick={exportCsv}>
+          Download CSV
+        </Button>
+      </div>
+
+      <HoldingsPanel
+        address={address}
+        domain={domain}
+        holdings={year.holdings}
+        colourOf={view.colourOf}
+        heldOf={view.counted}
+        onHeldChange={(mint, held) => setAnswers((prev) => ({ ...prev, [mint]: held }))}
+      />
+
+      <ZakatBreakdown
+        year={year}
+        holdings={year.holdings}
+        heldOf={view.counted}
+        netZakatable={view.result.netZakatable}
+        zakatDue={view.result.zakatDue}
+        aboveNisab={view.result.aboveNisab}
+        byToken={view.byToken}
+        byCategory={view.byCategory}
+      />
+
+      <TotalZakat
+        zakatDue={view.result.zakatDue}
+        aboveNisab={view.result.aboveNisab}
+        solPrice={year.holdings.find((asset) => asset.symbol === "SOL")?.price ?? 0}
+      />
+    </>
   );
 }
 
@@ -157,18 +211,17 @@ export function YearDetail({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <Link href={back} className="w-fit text-[12px] text-muted hover:text-ink">
-            ← All years
-          </Link>
-          <h2 className="text-[22px] tracking-[-0.02em]">{label}</h2>
-          <p className="text-[13px] text-muted">
-            Valued {formatDate(year.valuedAt, "gregorian")}
-            {year.source === "reconstructed" ? " · rebuilt from chain" : ""}
-            {year.source === "live" ? " · scanned just now" : ""}
-          </p>
-        </div>
+      <div className="flex flex-col gap-1">
+        <Link href={back} className="w-fit text-[12px] text-muted hover:text-ink">
+          ← All years
+        </Link>
+        <h2 className="text-[22px] tracking-[-0.02em]">{label}</h2>
+        <p className="text-[13px] text-muted">
+          Valued {formatDate(year.valuedAt, "gregorian")}
+          {year.source === "reconstructed" ? " · rebuilt from chain" : ""}
+          {year.source === "live" ? " · scanned just now" : ""}
+          {priced && !locked ? ` · gold ${formatPrice(year.goldPerGram)}/g` : ""}
+        </p>
       </div>
 
       {locked ? (
@@ -186,26 +239,21 @@ export function YearDetail({ id }: { id: string }) {
         </Panel>
       ) : priced ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <StatCard label="Zakat due" value={formatUsd(year.zakatDue)} tone="brand" />
-            <StatCard label="Net zakatable" value={formatUsd(year.netZakatable)} />
-            <StatCard
-              label="Gold, per gram"
-              value={formatPrice(year.goldPerGram)}
-              tone={year.source === "reconstructed" ? "muted" : "default"}
-            />
-          </div>
+          <PricedYear year={year} address={snapshot.address} domain={snapshot.domain} />
 
-          <Breakdown year={year} address={snapshot.address} />
-
-          {year.source === "reconstructed" ? (
-            <p className="text-[11.5px] leading-relaxed text-faint">
-              Rebuilt from the mints this wallet holds today, each read at its balance on{" "}
-              {formatDate(year.valuedAt, "gregorian")} and priced at that date. Gold comes from a
-              tokenised-gold series rather than the London fix, and unpriced dust is not rebuilt —
-              so this is a floor on what was held, not a full ledger.
-            </p>
-          ) : null}
+          <p className="text-[11.5px] leading-relaxed text-faint">
+            {year.source === "reconstructed" ? (
+              <>
+                Rebuilt from the mints this wallet holds today, each read at its balance on{" "}
+                {formatDate(year.valuedAt, "gregorian")} and priced at that date. Gold comes from a
+                tokenised-gold series rather than the London fix, and unpriced dust is not rebuilt —
+                so this is a floor on what was held, not a full ledger.{" "}
+              </>
+            ) : null}
+            Every holding is counted as held through the whole hawl unless you say otherwise. The
+            chain can show what was held and when, but not whether the same coins sat there
+            throughout, so that answer has to be yours.
+          </p>
         </>
       ) : (
         <Missing

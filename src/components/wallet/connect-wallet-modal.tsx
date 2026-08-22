@@ -10,7 +10,7 @@ import { useWallet } from "@/state/use-wallet";
 import type { WalletStatus } from "@/state/wallet-store";
 
 const walletRow =
-  "flex items-center gap-3.5 rounded-[12px] border border-brand bg-[#EFEDE3] p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "flex items-center gap-3.5 rounded-[12px] border border-brand bg-white p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 /** What the Phantom row reports while the extension is being asked. */
 const statusLabels: Record<WalletStatus, string> = {
@@ -37,7 +37,7 @@ export function ConnectWalletModal({ onClose }: { onClose: () => void }) {
 
   const scan = () => {
     onClose();
-    router.push("/portfolio");
+    router.push("/calculation");
   };
 
   /** Approval is Phantom's to grant — we only move on once it has. */

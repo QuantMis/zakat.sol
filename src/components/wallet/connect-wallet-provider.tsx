@@ -24,7 +24,7 @@ export function ConnectWalletProvider({ children }: { children: ReactNode }) {
    */
   const open = useCallback(() => {
     if (address) {
-      router.push("/portfolio");
+      router.push("/calculation");
 
       return;
     }

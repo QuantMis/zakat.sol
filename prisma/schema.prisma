@@ -11,6 +11,35 @@ datasource db {
   provider = "postgresql"
 }
 
+/// One row per address ever scanned, holding only what the landing-page
+/// counters are summed from. This is the one place the app keeps anything about
+/// a scan, and it is deliberately the smallest thing that answers the three
+/// questions on the band: how many wallets, how much zakat, how many coins.
+///
+/// A row is upserted per scan rather than appended, so re-scanning the same
+/// wallet corrects its figures instead of counting it twice.
+model WalletTally {
+  /// sha256(address + METRICS_HASH_SALT), hex. The address itself is never
+  /// written down — this key only has to be stable, not reversible, and
+  /// without the salt a leaked table cannot be matched back to known wallets.
+  walletHash String @id
+
+  /// The priced mints held at the last scan. Kept as a set so `Total Coins` can
+  /// be one global COUNT(DISTINCT) — the same mint in two wallets is one coin,
+  /// which summing per-wallet counts would get wrong. No balances: which wallet
+  /// holds how much of what is still nobody's business to keep.
+  mints String[]
+
+  /// USD as of the last scan, over the same priced holdings as `mints` — what
+  /// the calculator could value, which is what it charged zakat on. Decimal
+  /// rather than Float: every read sums this across every row in the table.
+  holdingsUsd Decimal @db.Decimal(20, 2)
+  zakatDueUsd Decimal @db.Decimal(20, 2)
+
+  firstScannedAt DateTime @default(now())
+  lastScannedAt  DateTime @updatedAt
+}
+
 /// A paid-for address, whose earlier hawls are open to anyone who looks it up.
 /// Payment buys the wallet's history, not a seat — there are no accounts here.
 model PremiumUnlock {

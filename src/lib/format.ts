@@ -1,3 +1,4 @@
+import { LOCAL_CURRENCY } from "@/data/currency";
 import type { CalendarSystem } from "@/lib/types";
 
 const usd = new Intl.NumberFormat("en-US", {
@@ -20,6 +21,16 @@ const compact = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+/** Headline money, where the magnitude is the point and the cents are noise. */
+const compactUsd = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+const count = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+
 const percent = new Intl.NumberFormat("en-US", {
   style: "percent",
   minimumFractionDigits: 2,
@@ -35,8 +46,31 @@ export function formatUsd(value: number): string {
   return usd.format(value);
 }
 
+/** "$3.2M". Under a thousand it falls back to the plain figure — "$840". */
+export function formatCompactUsd(value: number): string {
+  return compactUsd.format(value);
+}
+
+export function formatCount(value: number): string {
+  return count.format(value);
+}
+
 export function formatPrice(value: number): string {
   return value < 1 ? smallUsd.format(value) : usd.format(value);
+}
+
+/**
+ * A USD figure written in the local currency — "RM 129.31". Deliberately not
+ * `Intl`'s currency style: that renders "MYR 129.31" for a non-Malaysian
+ * locale, and the prefix people actually use is the point of showing it.
+ */
+export function formatLocal(usdValue: number): string {
+  const amount = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(usdValue * LOCAL_CURRENCY.perUsd);
+
+  return `${LOCAL_CURRENCY.prefix} ${amount}`;
 }
 
 export function formatSigned(value: number): string {

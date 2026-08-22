@@ -12,7 +12,12 @@ import type { CalendarSystem, NisabBasis } from "@/lib/types";
 /** Gold 85g: the more common contemporary position. */
 export const NISAB_BASIS: NisabBasis = "gold";
 
-export const CALENDAR: CalendarSystem = "hijri";
+/**
+ * Which calendar the years are *written* in. The years themselves are lunar
+ * either way — a hawl is a lunar year — so this only changes how each one is
+ * named on screen, never what it covers or when it fell due.
+ */
+export const CALENDAR: CalendarSystem = "gregorian";
 
 /** Whether the zakat figure is also quoted in SOL. */
 export const SHOW_SOL_EQUIVALENT = true;

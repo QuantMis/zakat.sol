@@ -62,6 +62,19 @@ export type PortfolioSnapshot = {
   dust: DustBucket;
 };
 
+/**
+ * The three landing-page counters, as the `WalletTally` table has them.
+ * `wallets` counts every scanned wallet and `coins` the distinct mints across
+ * all of them, however each one came out; `zakatUsd` is what the ones above the
+ * nisab owed. So the band reads as what the calculator has looked at, and what
+ * of it was actually due — a wallet under the nisab still counts as read.
+ */
+export type MetricTotals = {
+  wallets: number;
+  zakatUsd: number;
+  coins: number;
+};
+
 /** One row of the calculation: a category, what is in it, and what it came to. */
 export type BreakdownLine = {
   label: string;
@@ -103,6 +116,14 @@ export type ZakatYear = {
   goldPerGram: number;
   aboveNisab: boolean;
   breakdown: BreakdownLine[];
+  /**
+   * The positions the year was worked out from, priced as they stood at its
+   * hawl. Carried alongside the category rollup rather than instead of it: the
+   * screen asks about each token on its own — whether it sat through the whole
+   * hawl — which a category line cannot answer. Empty on a year that was never
+   * worked out, which is every locked one.
+   */
+  holdings: Asset[];
   source: ZakatYearSource;
 };
 

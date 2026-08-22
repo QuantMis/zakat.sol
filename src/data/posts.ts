@@ -57,7 +57,7 @@ export const posts: Post[] = [
         kind: "note",
         title: "Change what counts, change the answer",
         text: "Any holding can be switched out of the calculation on the portfolio screen, and the report recalculates the moment you do.",
-        href: "/portfolio",
+        href: "/calculation",
         linkLabel: "Open the portfolio",
       },
     ],

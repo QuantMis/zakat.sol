@@ -387,7 +387,8 @@ export async function fetchHoldings(address: string): Promise<HoldingsSnapshot> 
   return {
     address,
     scannedAt: new Date().toISOString(),
-    // Wrapped SOL is a different mint and stays where it landed in the list.
+    // Wrapped SOL shares this mint, so a wallet holding both reports it twice.
+    // Left as read here — `scanPortfolio` adds the two together.
     holdings: sol ? [sol, ...holdings] : holdings,
   };
 }

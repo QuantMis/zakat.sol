@@ -72,14 +72,24 @@ export function calculateZakat({ assets, dust, nisab, solPrice }: ZakatInput): Z
   };
 }
 
-const CATEGORY_LABELS: Record<Asset["category"], string> = {
-  sol: "SOL",
+export const CATEGORY_LABELS: Record<Asset["category"], string> = {
+  // Named for what it contains rather than just "SOL": liquid staking tokens
+  // are counted here too, so this line is reliably larger than the SOL holding
+  // beside it in the by-token breakdown. Same name for both would read as an
+  // arithmetic error rather than the two different things they are.
+  sol: "SOL & staked SOL",
   stablecoin: "Stablecoins",
   governance: "Governance tokens",
   memecoin: "Memecoins",
 };
 
-const CATEGORY_ORDER: Asset["category"][] = ["sol", "stablecoin", "governance", "memecoin"];
+/** Fixed, so a category keeps its colour on screen however the holdings move. */
+export const CATEGORY_ORDER: Asset["category"][] = [
+  "sol",
+  "stablecoin",
+  "governance",
+  "memecoin",
+];
 
 /** Groups the included holdings into the rows shown on the calculation screen. */
 export function breakdownByCategory(

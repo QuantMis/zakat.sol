@@ -2,6 +2,10 @@
 export const zakatRowGrid =
   "grid grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1.6fr_2.1fr_1.1fr]";
 
+/** Column template for the asset detail table: name, balance, standing, value. */
+export const assetRowGrid =
+  "grid grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1.9fr_1fr_1fr_1.1fr]";
+
 /** Column template for the year list: year, when it was valued, wealth, zakat. */
 export const yearRowGrid =
   "grid grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1fr_1.4fr_1.1fr_1.1fr]";

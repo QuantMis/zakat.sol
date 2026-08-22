@@ -1,7 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 
-import { MobileNav } from "@/components/layout/mobile-nav";
-import { Sidebar } from "@/components/layout/sidebar";
+import { DashboardTopBar } from "@/components/layout/dashboard-top-bar";
 import { ScanSync } from "@/components/portfolio/scan-sync";
 import { ConnectWalletProvider } from "@/components/wallet/connect-wallet-provider";
 
@@ -13,12 +12,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <ScanSync />
       </Suspense>
 
-      <div className="flex flex-1 bg-white">
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <MobileNav />
-          {children}
-        </div>
+      <div className="flex min-w-0 flex-1 flex-col bg-white">
+        <DashboardTopBar />
+        {children}
       </div>
     </ConnectWalletProvider>
   );

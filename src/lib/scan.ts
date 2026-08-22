@@ -1,7 +1,7 @@
 import { categoryFor } from "@/data/categories";
 import { fetchHoldings } from "@/lib/helius";
 import { pricedTokens } from "@/lib/jupiter";
-import type { Asset, PortfolioSnapshot } from "@/lib/types";
+import type { Asset, Holding, PortfolioSnapshot } from "@/lib/types";
 import { DUST_THRESHOLD_USD, assetValue, round2 } from "@/lib/zakat";
 
 /**
@@ -16,6 +16,32 @@ function displayDecimals(symbol: string): number {
   return symbol === "SOL" ? 3 : 2;
 }
 
+/**
+ * One line per mint. Wrapped SOL is not a separate mint from native SOL — both
+ * are `So111…112` — so a wallet holding each comes back as two entries against
+ * the same thing, at the same price. They are one holding and are added up as
+ * one: two rows would double the mint in the list, split what it is worth
+ * across them, and give a reader two places to answer the same question about
+ * the same coins.
+ *
+ * Merged before the dust threshold, so two sub-threshold halves of one holding
+ * are weighed together rather than each being dropped as dust.
+ */
+function mergeByMint(holdings: Holding[]): Holding[] {
+  const merged = new Map<string, Holding>();
+
+  for (const holding of holdings) {
+    const seen = merged.get(holding.mint);
+
+    merged.set(
+      holding.mint,
+      seen ? { ...seen, balance: seen.balance + holding.balance } : holding,
+    );
+  }
+
+  return [...merged.values()];
+}
+
 export async function scanPortfolio(address: string): Promise<PortfolioSnapshot> {
   const [holdings, prices] = await Promise.all([fetchHoldings(address), pricedTokens()]);
 
@@ -23,7 +49,7 @@ export async function scanPortfolio(address: string): Promise<PortfolioSnapshot>
   let dustMints = 0;
   let dustValue = 0;
 
-  for (const holding of holdings.holdings) {
+  for (const holding of mergeByMint(holdings.holdings)) {
     const priced = prices.get(holding.mint);
 
     // Unverified or untraded, so there is no honest number to put against it.

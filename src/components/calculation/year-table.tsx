@@ -38,7 +38,7 @@ function SourceNote({ source }: { source: ZakatYear["source"] }) {
   if (source === "live") return <span className="text-[11px] text-brand">Valued now</span>;
   if (source === "unpriced") return <span className="text-[11px] text-faint">Not priced</span>;
 
-  return <span className="text-[11px] text-faint">Rebuilt</span>;
+  return <span className="text-[11px] text-faint">Recalculate zakat</span>;
 }
 
 type RowProps = {
@@ -54,6 +54,8 @@ type RowProps = {
  * only ask again.
  */
 function YearRow({ year, watched, locked, onUnlock }: RowProps) {
+  // Two hawls can land in one Gregorian year — a lunar year is eleven days
+  // shorter — so the year alone can repeat. The date beside it says which.
   const label = CALENDAR === "hijri" ? year.hijriYear : year.gregorianYear;
   const priced = year.source !== "unpriced";
 

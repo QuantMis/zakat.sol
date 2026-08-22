@@ -81,6 +81,7 @@ function unpriced(hawl: Hawl): ZakatYear {
     goldPerGram: 0,
     aboveNisab: false,
     breakdown: [],
+    holdings: [],
     source: "unpriced",
   };
 }
@@ -100,6 +101,7 @@ export function lockedYears(): ZakatYear[] {
     goldPerGram: 0,
     aboveNisab: false,
     breakdown: [],
+    holdings: [],
     source: "locked",
   }));
 }
@@ -119,6 +121,7 @@ function empty(hawl: Hawl, goldThen: number): ZakatYear {
     goldPerGram: round2(goldThen),
     aboveNisab: false,
     breakdown: [],
+    holdings: [],
     source: "reconstructed",
   };
 }
@@ -174,6 +177,7 @@ async function rebuild(
     goldPerGram: round2(goldThen),
     aboveNisab: result.aboveNisab,
     breakdown: breakdownByCategory(assets, describe),
+    holdings: assets,
     source: "reconstructed",
   };
 }

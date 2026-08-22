@@ -57,9 +57,12 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const result = await redeem(address, signature);
 
-    // The payment is real but the chain has not settled it yet, or it was not
-    // for this address. Either way the caller should not be told it worked.
-    if (!result.ok) return Response.json({ error: result.reason }, { status: 402 });
+    // Not settled yet is not the same as not valid: the signature is real and
+    // the caller should ask again shortly rather than be told the payment
+    // failed. 402 is reserved for a payment the chain has actually judged.
+    if (!result.ok) {
+      return Response.json({ error: result.reason }, { status: result.pending ? 425 : 402 });
+    }
 
     return Response.json({ unlocked: true });
   } catch (error) {

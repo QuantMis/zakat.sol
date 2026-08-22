@@ -66,7 +66,7 @@ export default async function PostPage(props: PageProps<"/blog/[slug]">) {
             The scan is read-only and never signs a transaction. Connect a wallet, or paste a public
             address and see the same report.
           </p>
-          <Link href="/portfolio" className={buttonStyles("primary", "md")}>
+          <Link href="/calculation" className={buttonStyles("primary", "md")}>
             Open the calculator
           </Link>
         </aside>

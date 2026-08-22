@@ -41,6 +41,7 @@ function liveYear(snapshot: PortfolioSnapshot, zakat: ReturnType<typeof useZakat
     goldPerGram: metalPrices.goldPerGram,
     aboveNisab: zakat.aboveNisab,
     breakdown: zakat.breakdown,
+    holdings: snapshot.assets,
     source: "live",
   };
 }

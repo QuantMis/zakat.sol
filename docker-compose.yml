@@ -8,7 +8,9 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: zakat
     ports:
-      - "5432:5432"
+      # Loopback only. These are the default credentials, so the port must not
+      # be reachable from off the host.
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +18,54 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Applies prisma/migrations and exits. `app` will not start until it succeeds,
+  # so a failed migration stops the deploy instead of half-landing it.
+  migrate:
+    profiles: ["app"]
+    build:
+      context: .
+      target: builder
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/zakat?schema=public
+    command: ["pnpm", "db:deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      args:
+        # Inlined into the browser bundle at build time, so it is a build arg
+        # rather than an environment variable. Changing it needs a rebuild.
+        NEXT_PUBLIC_TREASURY_ADDRESS: ${NEXT_PUBLIC_TREASURY_ADDRESS}
+    container_name: zakat-app
+    restart: unless-stopped
+    environment:
+      # `postgres`, not localhost — the app resolves it over the compose network.
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/zakat?schema=public
+      HELIUS_API_KEY: ${HELIUS_API_KEY}
+    ports:
+      # nginx runs on the host and proxies here; nothing external reaches it.
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
 
 volumes:
   postgres-data:
